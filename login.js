@@ -31,20 +31,21 @@ function togglePwd(inputId, icon) {
 // ALTERNAR ENTRE FORMULÁRIOS
 // ==========================================
 function switchForm(formName) {
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('signupForm').style.display = 'none';
-
+    var loginForm = document.getElementById('loginForm');
+    var signupForm = document.getElementById('signupForm');
     var title = document.getElementById('formTitle');
     var subtitle = document.getElementById('formSubtitle');
 
     if (formName === 'login') {
-        document.getElementById('loginForm').style.display = 'block';
-        title.innerText = 'Bem-vindo de volta!';
+        loginForm.style.display = 'block';
+        signupForm.style.display = 'none';
+        title.innerHTML = 'Bem-vindo de <span style="color:#FF6B00">volta!</span>';
         subtitle.innerText = 'Acesse sua plataforma de soluções em vendas e gerencie tudo em um só lugar.';
     } else if (formName === 'signup') {
-        document.getElementById('signupForm').style.display = 'block';
-        title.innerText = 'Crie sua conta';
-        subtitle.innerText = 'Preencha os dados abaixo para começar a usar o sistema.';
+        loginForm.style.display = 'none';
+        signupForm.style.display = 'block';
+        title.innerHTML = 'Crie sua <span style="color:#FF6B00">conta</span>';
+        subtitle.innerText = 'Preencha os dados abaixo para começar a usar o sistema gratuitamente.';
     }
 }
 
@@ -81,7 +82,7 @@ document.getElementById('signupForm').addEventListener('submit', function (e) {
     }
 
     var btnText = document.getElementById('btnSignupText');
-    btnText.innerText = 'Processando...';
+    btnText.innerText = 'Criando conta...';
 
     setTimeout(function () {
         var novoUsuario = {
@@ -96,7 +97,7 @@ document.getElementById('signupForm').addEventListener('submit', function (e) {
         localStorage.setItem('nexus_usuarios', JSON.stringify(usuarios));
 
         btnText.innerText = 'Criar Minha Conta';
-        mostrarToast('Cadastro realizado com sucesso! Faça seu login.', 'success');
+        mostrarToast('✅ Cadastro realizado! Faça seu login.', 'success');
         switchForm('login');
         document.getElementById('loginEmail').value = email;
     }, 1200);
@@ -149,7 +150,46 @@ document.getElementById('loginForm').addEventListener('submit', function (e) {
 });
 
 // ==========================================
-// OAUTH SIMULADO
+// LOGIN COM GOOGLE (Simulado)
+// ==========================================
+function loginComGoogle() {
+    var btn = document.getElementById('btnGoogle');
+    if (btn) {
+        btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Conectando...";
+        btn.disabled = true;
+    }
+
+    setTimeout(function () {
+        // Simula usuário Google
+        var googleUser = {
+            nome: 'Usuário Google',
+            email: 'google@usuario.com',
+            senha: 'google_oauth',
+            status: 'confirmed'
+        };
+
+        var usuariosStr = localStorage.getItem('nexus_usuarios');
+        var usuarios = usuariosStr ? JSON.parse(usuariosStr) : [];
+        var jaExiste = usuarios.find(function (u) { return u.email === googleUser.email; });
+        if (!jaExiste) {
+            usuarios.push(googleUser);
+            localStorage.setItem('nexus_usuarios', JSON.stringify(usuarios));
+        }
+
+        localStorage.setItem('nexus_auth', 'true');
+        localStorage.setItem('nexus_user', googleUser.email);
+        localStorage.setItem('nexus_name', googleUser.nome);
+
+        mostrarToast('Login com Google realizado! Redirecionando...', 'success');
+
+        setTimeout(function () {
+            window.location.href = 'index.html';
+        }, 900);
+    }, 1500);
+}
+
+// ==========================================
+// OAUTH SIMULADO (Microsoft etc)
 // ==========================================
 function simularOAuth(provedor) {
     mostrarToast('Login via ' + provedor + ' em desenvolvimento.', 'info');
