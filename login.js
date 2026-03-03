@@ -194,3 +194,11 @@ function loginComGoogle() {
 function simularOAuth(provedor) {
     mostrarToast('Login via ' + provedor + ' em desenvolvimento.', 'info');
 }
+
+// ==========================================
+// EXPOR FUNÇÕES GLOBALMENTE (type="module" fix)
+// ==========================================
+window.togglePwd = togglePwd;
+window.switchForm = switchForm;
+window.loginComGoogle = loginComGoogle;
+window.simularOAuth = simularOAuth;

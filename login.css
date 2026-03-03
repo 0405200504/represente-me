@@ -60,8 +60,13 @@ body.login-body {
 }
 
 @keyframes float {
-    0% { transform: translateY(0) scale(1); }
-    100% { transform: translateY(-50px) scale(1.06); }
+    0% {
+        transform: translateY(0) scale(1);
+    }
+
+    100% {
+        transform: translateY(-50px) scale(1.06);
+    }
 }
 
 /* Container do Login */
@@ -105,17 +110,17 @@ body.login-body {
 .login-header .logo {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
 }
 
-.login-header .logo span {
-    font-family: 'Outfit', sans-serif;
-    font-size: 22px;
-    font-weight: 800;
-    color: #ffffff;
-    white-space: nowrap;
-    letter-spacing: -0.02em;
+.logo-full-img {
+    width: 220px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 10px;
+    background: #fff;
+    padding: 8px 14px;
+    box-shadow: 0 4px 20px rgba(255, 107, 0, 0.2);
 }
 
 .login-header h2 {
@@ -192,8 +197,8 @@ body.login-body {
     box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.12);
 }
 
-.input-wrapper input:focus ~ .icon-input,
-.input-wrapper input:focus + .icon-input {
+.input-wrapper input:focus~.icon-input,
+.input-wrapper input:focus+.icon-input {
     color: #FF6B00;
 }
 
@@ -310,7 +315,8 @@ body.login-body {
     letter-spacing: 0.1em;
 }
 
-.divider::before, .divider::after {
+.divider::before,
+.divider::after {
     content: '';
     flex: 1;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -358,9 +364,17 @@ body.login-body {
     box-shadow: 0 6px 18px rgba(0, 164, 239, 0.1);
 }
 
-.social-btn i { font-size: 19px; }
-.social-btn .bxl-google { color: #ea4335; }
-.social-btn.microsoft i { color: #00a4ef; }
+.social-btn i {
+    font-size: 19px;
+}
+
+.social-btn .bxl-google {
+    color: #ea4335;
+}
+
+.social-btn.microsoft i {
+    color: #00a4ef;
+}
 
 .signup-link {
     text-align: center;
@@ -429,8 +443,15 @@ body.login-body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .feature-icon {
@@ -440,11 +461,15 @@ body.login-body {
     justify-content: center;
 }
 
-.feature-icon img {
-    width: 72px;
-    height: 72px;
+.logo-right-img {
+    width: 260px;
+    height: auto;
     object-fit: contain;
-    filter: drop-shadow(0 0 20px rgba(255, 107, 0, 0.5));
+    border-radius: 14px;
+    background: #fff;
+    padding: 14px 20px;
+    box-shadow: 0 8px 40px rgba(255, 107, 0, 0.25);
+    margin-bottom: 12px;
 }
 
 .feature-card h3 {
@@ -463,7 +488,7 @@ body.login-body {
 .feature-card p {
     font-size: 14px;
     line-height: 1.7;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
     margin-bottom: 32px;
 }
 
@@ -511,7 +536,7 @@ body.login-body {
     text-transform: uppercase;
     letter-spacing: 1px;
     opacity: 0.6;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 /* Toast Container */
@@ -532,31 +557,65 @@ body.login-body {
     padding: 14px 18px;
     border-radius: 12px;
     background: #1a1a1a;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #ffffff;
     font-size: 14px;
     font-weight: 500;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
     animation: slideIn 0.3s ease;
     min-width: 280px;
     max-width: 380px;
 }
 
-.toast-success { border-left: 3px solid #FF6B00; }
-.toast-success i { color: #FF6B00; font-size: 20px; }
-.toast-error { border-left: 3px solid #FF4444; }
-.toast-error i { color: #FF4444; font-size: 20px; }
-.toast-info { border-left: 3px solid rgba(255,255,255,0.3); }
-.toast-info i { color: rgba(255,255,255,0.5); font-size: 20px; }
+.toast-success {
+    border-left: 3px solid #FF6B00;
+}
+
+.toast-success i {
+    color: #FF6B00;
+    font-size: 20px;
+}
+
+.toast-error {
+    border-left: 3px solid #FF4444;
+}
+
+.toast-error i {
+    color: #FF4444;
+    font-size: 20px;
+}
+
+.toast-info {
+    border-left: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.toast-info i {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 20px;
+}
 
 @keyframes slideIn {
-    from { opacity: 0; transform: translateX(30px); }
-    to { opacity: 1; transform: translateX(0); }
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 @keyframes slideOut {
-    from { opacity: 1; transform: translateX(0); }
-    to { opacity: 0; transform: translateX(30px); }
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(30px);
+    }
 }
 
 /* Responsividade */
@@ -564,6 +623,7 @@ body.login-body {
     .login-container.glass-card {
         flex-direction: column;
     }
+
     .login-right {
         padding: 35px 20px;
         flex: unset;
@@ -571,13 +631,22 @@ body.login-body {
         border-left: none;
         border-top: 1px solid rgba(255, 107, 0, 0.12);
     }
+
     .login-left {
         padding: 40px 30px;
     }
 }
 
 @media (max-width: 480px) {
-    .login-left { padding: 28px 20px; }
-    .social-login { flex-direction: column; }
-    .login-header h2 { font-size: 26px; }
+    .login-left {
+        padding: 28px 20px;
+    }
+
+    .social-login {
+        flex-direction: column;
+    }
+
+    .login-header h2 {
+        font-size: 26px;
+    }
 }
