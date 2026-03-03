@@ -1369,5 +1369,90 @@ window.abrirConfiguracoes = abrirConfiguracoes;
 window.fecharConfiguracoes = fecharConfiguracoes;
 window.mudarTema = mudarTema;
 
-const themeOnLoad = localStorage.getItem('nexus_theme') || 'light';
+const themeOnLoad = localStorage.getItem('nexus_theme') || 'dark';
 aplicarTema(themeOnLoad);
+
+// ==========================================
+// ALTERAR LOGIN (EMAIL/SENHA) NAS CONFIGURAÇÕES
+// ==========================================
+function salvarNovoLogin() {
+    const novoEmail = document.getElementById('configNovoEmail') ? document.getElementById('configNovoEmail').value.trim() : '';
+    const novaSenha = document.getElementById('configNovaSenha') ? document.getElementById('configNovaSenha').value : '';
+    const confirmarSenha = document.getElementById('configConfirmarSenha') ? document.getElementById('configConfirmarSenha').value : '';
+
+    if (!novoEmail && !novaSenha) {
+        mostrarToast('Preencha ao menos um campo para alterar.', 'error');
+        return;
+    }
+
+    if (novaSenha && novaSenha !== confirmarSenha) {
+        mostrarToast('As senhas não coincidem!', 'error');
+        return;
+    }
+
+    if (novaSenha && novaSenha.length < 4) {
+        mostrarToast('A senha precisa ter pelo menos 4 caracteres.', 'error');
+        return;
+    }
+
+    const emailAtual = localStorage.getItem('nexus_user');
+    const usuariosStr = localStorage.getItem('nexus_usuarios');
+    let usuarios = usuariosStr ? JSON.parse(usuariosStr) : [];
+    const idx = usuarios.findIndex(u => u.email === emailAtual);
+
+    if (idx === -1) {
+        mostrarToast('Usuário não encontrado no sistema.', 'error');
+        return;
+    }
+
+    if (novoEmail && novoEmail !== emailAtual) {
+        const emailJaExiste = usuarios.find(u => u.email === novoEmail && novoEmail !== emailAtual);
+        if (emailJaExiste) {
+            mostrarToast('Este e-mail já está cadastrado.', 'error');
+            return;
+        }
+        // Migrar dados do usuário para o novo email
+        const dadosAntigos = localStorage.getItem('nexus_empresas_' + emailAtual);
+        const pinsAntigos = localStorage.getItem('nexus_map_pins_' + emailAtual);
+        if (dadosAntigos) {
+            localStorage.setItem('nexus_empresas_' + novoEmail, dadosAntigos);
+            localStorage.removeItem('nexus_empresas_' + emailAtual);
+        }
+        if (pinsAntigos) {
+            localStorage.setItem('nexus_map_pins_' + novoEmail, pinsAntigos);
+            localStorage.removeItem('nexus_map_pins_' + emailAtual);
+        }
+        usuarios[idx].email = novoEmail;
+        localStorage.setItem('nexus_user', novoEmail);
+        const adminName = document.querySelector('.admin_name');
+        if (adminName) {
+            const username = novoEmail.split('@')[0];
+            adminName.innerText = username.charAt(0).toUpperCase() + username.slice(1);
+        }
+    }
+
+    if (novaSenha) {
+        usuarios[idx].senha = novaSenha;
+    }
+
+    localStorage.setItem('nexus_usuarios', JSON.stringify(usuarios));
+    mostrarToast('Dados de acesso atualizados com sucesso!', 'success');
+
+    if (document.getElementById('configNovoEmail')) document.getElementById('configNovoEmail').value = '';
+    if (document.getElementById('configNovaSenha')) document.getElementById('configNovaSenha').value = '';
+    if (document.getElementById('configConfirmarSenha')) document.getElementById('configConfirmarSenha').value = '';
+}
+
+window.salvarNovoLogin = salvarNovoLogin;
+
+// ==========================================
+// EXPOR FUNÇÕES GLOBALMENTE (type="module" fix)
+// ==========================================
+window.mostrarPainel = mostrarPainel;
+window.abrirModal = abrirModal;
+window.fecharModal = fecharModal;
+window.toggleSubMenuEmpresas = toggleSubMenuEmpresas;
+window.toggleNotesPanel = toggleNotesPanel;
+window.filtrarEmpresas = filtrarEmpresas;
+window.mostrarToast = mostrarToast;
+window.fazerLogout = fazerLogout;
