@@ -1,0 +1,458 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Represente-me! | Hub de Integrações</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Boxicons para ícones -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAçãoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="logo.png">
+</head>
+
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="logo-details" style="justify-content: center; padding: 0;">
+            <img src="logo.png" alt="Logo" class="sidebar-logo">
+        </div>
+        <ul class="nav-links">
+            <li>
+                <a href="#" class="active" id="linkPainel" onclick="mostrarPainel()">
+                    <i class='bx bx-grid-alt'></i>
+                    <span class="links_name">Painel</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="#" onclick="toggleSubMenuEmpresas()">
+                    <i class='bx bx-layer'></i>
+                    <span class="links_name">Minhas Empresas <i class='bx bx-chevron-down' id="arrowEmpresas"
+                            style="margin-left: 10px;"></i></span>
+                </a>
+            </li>
+            <!-- Submenu Dinâmico de Logos -->
+            <ul id="subMenuEmpresas" class="sub-menu-companies" style="display: none;">
+                <!-- Javascript injetará as empresas/apps aqui -->
+            </ul>
+
+            <li>
+                <a href="#" id="linkMapa" onclick="mostrarMapa()">
+                    <i class='bx bx-map-alt'></i>
+                    <span class="links_name">Mapa Brasil</span>
+                </a>
+            </li>
+
+            <li>
+                <a href="#" onclick="abrirConfiguracoes()">
+                    <i class='bx bx-cog'></i>
+                    <span class="links_name">Configurações</span>
+                </a>
+            </li>
+            <li class="log_out" style="margin-top: auto; position: absolute; bottom: 20px; width: 100%;">
+                <a href="#" onclick="fazerLogout()">
+                    <i class='bx bx-log-out'></i>
+                    <span class="links_name" style="color: var(--danger-color); font-weight: bold;">Sair</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <section class="home-section">
+        <nav class="topbar">
+            <div class="sidebar-button">
+                <i class='bx bx-menu sidebarBtn'></i>
+                <span class="dashboard" id="dashboardTitle">Painel de Controle</span>
+                <div class="topbar-pins" id="topbarPins"></div>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Pesquisar [Ctrl+Espaço]">
+                <i class='bx bx-search'></i>
+            </div>
+            <div class="profile-details">
+                <img src="https://ui-avatars.com/api/?name=Usuario+Admin&background=0D8ABC&color=fff" alt="Perfil">
+                <span class="admin_name">Administrador</span>
+            </div>
+        </nav>
+
+        <div class="home-content" id="homeContentContainer">
+
+            <!-- ==== COLUNA PRINCIPAL (DASHBOARD) ==== -->
+            <div class="main-column" id="mainColumn">
+                <!-- Cards de Visão Geral -->
+                <div class="overview-boxes">
+                    <div class="box glass-card" style="width: 100%; max-width: 450px;">
+                        <div class="right-side">
+                            <div class="box-topic">Total de Sistemas Integrados</div>
+                            <div class="number" id="totalEmpresas">0</div>
+                            <div class="indicator">
+                                <i class='bx bx-up-arrow-alt'></i>
+                                <span class="text">Todos os Itens</span>
+                            </div>
+                        </div>
+                        <i class='bx bx-buildings cart'></i>
+                    </div>
+                </div>
+
+                <!-- Tabela Principal -->
+                <div class="sales-boxes">
+                    <div class="recent-sales box glass-card w-100">
+                        <div class="title-wrapper">
+                            <div class="title">Lista de Cadastros e Integrações</div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <i class='bx bx-grid-alt view-toggle-btn' id="btnToggleView"
+                                    title="Alternar Visualização"></i>
+                                <button class="btn-primary" onclick="abrirModal()">
+                                    <i class='bx bx-plus'></i> Novo Cadastro <span class="shortcut-tip">[Shift+N]</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="gridEmpresas" class="empresas-grid" style="display: none;"></div>
+
+                        <div class="table-container" id="tableContainer">
+                            <table class="leads-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome / Título</th>
+                                        <th></th>
+                                        <th>Tipo / Categoria</th>
+                                        <th>Status</th>
+                                        <th>Sistema / Acesso</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaEmpresas">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div id="emptyState" class="empty-state">
+                            <i class='bx bx-folder-open'></i>
+                            <p>Nenhuma integração cadastrada ainda.</p>
+                            <button class="btn-secondary" onclick="abrirModal()">Adicione sistemas, apps ou
+                                planilhas</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==== COLUNA DO IFRAME (TELA CHEIA) ==== -->
+            <div class="iframe-column full-view" id="iframeColumn" style="display:none;">
+                <div class="iframe-header">
+                    <div class="iframe-title">
+                        <img src="" id="iframeIcon"
+                            style="width: 30px; border-radius: 5px; margin-right: 10px; display: none;">
+                        <i class='bx bx-window-alt' id="iframeFallbackIcon"
+                            style="color: var(--primary-color); font-size: 20px;"></i>
+                        <h3 id="iframeTitle">Sistema Web</h3>
+                    </div>
+                    <div class="iframe-actions">
+                        <button class="action-btn" onclick="toggleNotesPanel()" title="Anotações"
+                            style="margin-right:10px;"><i class='bx bx-notepad'
+                                style="color:var(--primary-color);"></i></button>
+                        <a href="#" target="_blank" id="openExternalBtn" class="action-btn" title="Abrir em Nova Aba"><i
+                                class='bx bx-link-external'></i></a>
+                        <button class="close-iframe-btn" onclick="mostrarPainel()" title="Voltar ao Painel"><i
+                                class='bx bx-x'></i></button>
+                    </div>
+                </div>
+                <div id="iframeAlert"
+                    style="background:#fff3cd; color:#856404; font-size:12px; padding:8px 25px; border-bottom:1px solid #ffeeba;">
+                    <i class='bx bx-info-circle'></i> Algumas planilhas ou sites bloqueiam abertura interna. Se a tela
+                    ficar em branco, clique no botão de "Nova Aba".
+                </div>
+                <div class="iframe-body" style="display:flex;">
+                    <iframe id="sistemaIframe" src="" style="flex: 1;"></iframe>
+                    <div class="iframe-notes-panel" id="iframeNotesPanel"
+                        style="width: 250px; background:var(--background-color); border-left:1px solid var(--border-color); display:flex; flex-direction:column; transition: width 0.3s ease;">
+                        <div
+                            style="padding:15px; border-bottom:1px solid var(--border-color); background:var(--card-bg); display:flex; justify-content:space-between; align-items:center;">
+                            <h4 style="font-size:14px; margin:0; color:var(--text-primary);"><i class='bx bx-notepad'
+                                    style="color:var(--primary-color);"></i> Lembretes Rápidos</h4>
+                            <button onclick="toggleNotesPanel()"
+                                style="background:none; border:none; cursor:pointer; color:var(--text-color);"><i
+                                    class='bx bx-x' style="font-size:18px;"></i></button>
+                        </div>
+                        <textarea id="iframeNotes"
+                            style="flex:1; border:none; padding:15px; resize:none; font-family:inherit; font-size:13px; outline:none; color:var(--text-primary); background:transparent;"
+                            placeholder="Anote senhas, passos ou dicas dessa ferramenta aqui... (Salva sozinho)"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==== COLUNA DO MAPA BRASIL ==== -->
+            <div class="map-column full-view" id="mapColumn"
+                style="display:none; height: calc(100vh - 80px); padding: 10px;">
+                <div
+                    style="background: white; border-radius: 12px; height: 100%; box-shadow: var(--shadow); position: relative; overflow: hidden;">
+                    <div
+                        style="position: absolute; top: 15px; left: 60px; z-index: 1000; background: rgba(255,255,255,0.9); padding: 10px 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); backdrop-filter: blur(5px); display: flex; align-items: center; gap: 15px;">
+                        <h4 style="margin: 0; color: var(--text-color); font-size: 14px;"><i class='bx bx-map'
+                                style="color:var(--primary-color);"></i> Suas Lojas (Dê um clique no mapa para Mapear)
+                        </h4>
+                        <button class="btn-primary" onclick="abrirModalNovoClienteMapa()"
+                            style="padding: 6px 12px; font-size: 12px;">
+                            <i class='bx bx-plus'></i> Cadastrar via CNPJ
+                        </button>
+                    </div>
+                    <div id="map" style="width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Modal de Cadastro / Edição -->
+    <div id="formModal" class="modal-overlay">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2 id="modalTitle">Novo Cadastro / Integração</h2>
+                <button class="close-btn" onclick="fecharModal()"><i class='bx bx-x'></i></button>
+            </div>
+
+            <form id="empresaForm">
+                <input type="hidden" id="empresaId">
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label for="siteUrl">Site / Link para Acessar a Empresa <span
+                            style="color:var(--primary-color)">(Auto-preencher)</span></label>
+                    <input type="url" id="siteUrl" placeholder="Ex: https://empresa.com.br. Cole o link aqui primeiro!">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nomeEmpresa">Nome da Empresa / Ferramenta *</label>
+                        <input type="text" id="nomeEmpresa" required placeholder="Ex: Tech Solutions Brasil">
+                    </div>
+                    <div class="form-group">
+                        <label for="cnpjEmpresa">CNPJ (Opcional)</label>
+                        <input type="text" id="cnpjEmpresa" placeholder="00.000.000/0000-00">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nomeContato">Pessoa de Contato (Opcional)</label>
+                        <input type="text" id="nomeContato" placeholder="Ex: João Silva">
+                    </div>
+                    <div class="form-group">
+                        <label for="telefone">Telefone / WhatsApp (Opcional)</label>
+                        <input type="tel" id="telefone" placeholder="(11) 99999-9999">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group"><label for="tipoItem">Qual o tipo deste item? *</label>
+                        <select id="tipoItem" required>
+                            <option value="">Selecione o tipo...</option>
+                            <option value="empresa">Empresa / Cliente</option>
+                            <option value="sistema">Sistema Web / Site</option>
+                            <option value="app">Aplicativo Mobile</option>
+                            <option value="planilha">Planilha (Google Sheets / Excel)</option>
+                            <option value="outro">Outros</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status do Uso *</label>
+                        <select id="status" required>
+                            <option value="ativo">Ativo / Utilizando</option>
+                            <option value="manutencao">Em Manutenção / Criação</option>
+                            <option value="novo">Novo</option>
+                            <option value="arquivado">Inativo / Arquivado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-text" onclick="fecharModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnSalvar">Concluir Cadastro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal do Mapa (Pin Lojista) -->
+    <div id="pinModal" class="modal-overlay">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h2 id="pinModalTitle">Mapear Lojista</h2>
+                <button class="close-btn" onclick="fecharModalPin()"><i class='bx bx-x'></i></button>
+            </div>
+            <form id="pinForm">
+                <input type="hidden" id="pinLat">
+                <input type="hidden" id="pinLng">
+                <input type="hidden" id="pinId">
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label>Busca Inteligente por CNPJ (Auto-preenche endereço e nome)</label>
+                    <input type="text" id="pinCnpj" placeholder="Digite apenas números (Ex: 00000000000000)">
+                </div>
+                <div class="form-group" style="margin-bottom: 25px;">
+                    <label>Nome do Lojista / Cliente *</label>
+                    <input type="text" id="pinNome" required placeholder="Ex: Supermercado XYZ">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Contato / Telefone</label>
+                        <input type="text" id="pinContato" placeholder="(XX) 99999-9999">
+                    </div>
+                    <div class="form-group">
+                        <label>Situação</label>
+                        <select id="pinStatus">
+                            <option value="ativo">Cliente Ativo</option>
+                            <option value="prospect">Ponto de Prospecção</option>
+                            <option value="inativo">Inativo / Antigo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Observações</label>
+                    <textarea id="pinObs" rows="3" placeholder="Informações extras deste local..."
+                        style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;"></textarea>
+                </div>
+                <!-- Botão de exclusão (só aparece editando) -->
+                <div id="btnDeletePinContainer" style="display:none; text-align:left; margin-top:20px;">
+                    <a href="#" style="color:red; font-size:14px; text-decoration:none;"
+                        onclick="deletarPinSelecionado()"><i class='bx bx-trash'></i> Excluir do Mapa</a>
+                </div>
+                <div class="modal-actions" style="margin-top:25px;">
+                    <button type="button" class="btn-text" onclick="fecharModalPin()">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnSalvarPin">Salvar Localização</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Perfil / Arquivos do Cliente -->
+    <div id="perfilModal" class="modal-overlay">
+        <div class="modal-content glass-card" style="max-width: 600px;">
+            <div class="modal-header">
+                <div>
+                    <h2 id="perfilNome" style="margin-bottom: 5px;">Nome do Cliente</h2>
+                    <p id="perfilCNPJ" style="font-size: 12px; color: var(--text-secondary); margin: 0;">CNPJ:
+                        00.000.000/0000-00</p>
+                </div>
+                <button class="close-btn" onclick="fecharPerfil()"><i class='bx bx-x'></i></button>
+            </div>
+
+            <div class="profile-tabs" style="margin: 20px 0; border-bottom: 1px solid #eee; display:flex; gap: 20px;">
+                <button class="tab-btn active"
+                    style="background:none; border:none; border-bottom: 2px solid var(--primary-color); padding-bottom:10px; font-weight:600; color:var(--primary-color); cursor:pointer;">
+                    <i class='bx bx-folder-open'></i> Documentos e Arquivos
+                </button>
+            </div>
+
+            <div class="upload-area"
+                style="border: 2px dashed #ddd; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; background: #fafafa;">
+                <i class='bx bx-cloud-upload'
+                    style="font-size: 30px; color: var(--primary-color); margin-bottom: 10px;"></i>
+                <h4 style="margin:0 0 5px 0; color: #333;">Fazer Upload de Arquivo</h4>
+                <p style="font-size: 12px; color: #666; margin:0 0 15px 0;">PDFs, Imagens, Planilhas (máx. 2MB
+                    recomendado)</p>
+                <input type="file" id="fileUploadInput" style="display:none;" onchange="handleFileUpload(event)">
+                <button class="btn-primary" onclick="document.getElementById('fileUploadInput').click()"
+                    style="padding: 6px 15px; font-size:13px;">Selecionar Arquivo</button>
+            </div>
+
+            <div class="arquivos-list">
+                <h4 style="margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px;"><i
+                        class='bx bx-file'></i> Arquivos Salvos</h4>
+                <div id="listaArquivosContainer" style="max-height: 200px; overflow-y: auto;">
+                    <!-- Arquivos vao aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Configurações -->
+    <div id="configModal" class="modal-overlay">
+        <div class="modal-content glass-card" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2><i class='bx bx-cog' style="color:var(--primary-color); margin-right:8px;"></i>Configurações</h2>
+                <button class="close-btn" onclick="fecharConfiguracoes()"><i class='bx bx-x'></i></button>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <div
+                    style="background: rgba(255,107,0,0.08); border: 1px solid rgba(255,107,0,0.2); border-radius: 12px; padding: 18px; margin-bottom: 24px;">
+                    <h4
+                        style="margin: 0 0 4px 0; font-size: 15px; color: var(--text-primary); display:flex; align-items:center; gap:8px;">
+                        <i class='bx bx-user-circle' style="color:var(--primary-color); font-size:20px;"></i>
+                        Alterar Dados de Acesso
+                    </h4>
+                    <p style="margin: 0 0 16px 0; font-size: 12px; color: var(--text-secondary);">Deixe em branco o que
+                        não deseja alterar.</p>
+
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label
+                            style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-secondary); margin-bottom:6px; display:block;">Novo
+                            E-mail</label>
+                        <div style="position:relative;">
+                            <i class='bx bx-envelope'
+                                style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--primary-color); font-size:16px;"></i>
+                            <input type="email" id="configNovoEmail" placeholder="novo@email.com"
+                                style="width:100%; padding:11px 12px 11px 38px; border-radius:10px; border:1px solid rgba(255,107,0,0.2); background:rgba(255,255,255,0.05); color:var(--text-primary); font-size:14px; font-family:inherit; outline:none; box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label
+                            style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-secondary); margin-bottom:6px; display:block;">Nova
+                            Senha</label>
+                        <div style="position:relative;">
+                            <i class='bx bx-lock-alt'
+                                style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--primary-color); font-size:16px;"></i>
+                            <input type="password" id="configNovaSenha" placeholder="Mínimo 4 caracteres"
+                                style="width:100%; padding:11px 12px 11px 38px; border-radius:10px; border:1px solid rgba(255,107,0,0.2); background:rgba(255,255,255,0.05); color:var(--text-primary); font-size:14px; font-family:inherit; outline:none; box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label
+                            style="font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-secondary); margin-bottom:6px; display:block;">Confirmar
+                            Nova Senha</label>
+                        <div style="position:relative;">
+                            <i class='bx bx-lock'
+                                style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--primary-color); font-size:16px;"></i>
+                            <input type="password" id="configConfirmarSenha" placeholder="Repita a nova senha"
+                                style="width:100%; padding:11px 12px 11px 38px; border-radius:10px; border:1px solid rgba(255,107,0,0.2); background:rgba(255,255,255,0.05); color:var(--text-primary); font-size:14px; font-family:inherit; outline:none; box-sizing:border-box;">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button type="button" class="btn-text" onclick="fecharConfiguracoes()">Cancelar</button>
+                    <button type="button" class="btn-primary" onclick="salvarNovoLogin()">
+                        <i class='bx bx-save'></i> Salvar Alterações
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container do Toast -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        window.addEventListener('error', function (event) {
+            alert("JS Error: " + event.message + " at " + event.filename + ":" + event.lineno);
+        });
+    </script>
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>

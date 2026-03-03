@@ -144,7 +144,7 @@ document.getElementById('loginForm').addEventListener('submit', function (e) {
         mostrarToast('Acesso autorizado! Redirecionando...', 'success');
 
         setTimeout(function () {
-            window.location.href = 'index.html';
+            window.location.href = 'painel.html';
         }, 800);
     }, 1200);
 });
@@ -183,7 +183,7 @@ function loginComGoogle() {
         mostrarToast('Login com Google realizado! Redirecionando...', 'success');
 
         setTimeout(function () {
-            window.location.href = 'index.html';
+            window.location.href = 'painel.html';
         }, 900);
     }, 1500);
 }
