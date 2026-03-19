@@ -1,6 +1,13 @@
 import { sql } from '@vercel/postgres';
 
 export default async function handler(request, response) {
+  // Segurança contra crash 500 sem banco conectado
+  if (!process.env.POSTGRES_URL) {
+    return response.status(500).json({ 
+      error: "POSTGRES_URL não configurada no Vercel. Por favor, conecte o banco de dados Neon no painel Storage." 
+    });
+  }
+
   try {
     // Tabela de Integrações (Empresas)
     await sql`

@@ -1,6 +1,7 @@
 {
   "name": "meu-aplicativo",
   "version": "1.0.0",
+  "type": "module",
   "description": "Represente-me! | Hub de Integrações",
   "scripts": {
     "dev": "vite",
