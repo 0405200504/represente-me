@@ -1475,9 +1475,81 @@ window.deletarArquivo = deletarArquivo;
 function abrirConfiguracoes() {
     const docModal = document.getElementById('configModal');
     if(docModal) docModal.classList.add('active');
+    
+    // Preencher dados do perfil
+    const nome = localStorage.getItem('nexus_name') || '';
+    const email = localStorage.getItem('nexus_user') || '';
+    
+    const inputNome = document.getElementById('configNome');
+    const inputEmail = document.getElementById('configEmail');
+    
+    if(inputNome) inputNome.value = nome;
+    if(inputEmail) inputEmail.value = email;
+
     const currentTheme = localStorage.getItem('nexus_theme') || 'light';
     const select = document.getElementById('themeSelect');
     if(select) select.value = currentTheme;
+}
+
+function switchConfigTab(tabId, el) {
+    document.querySelectorAll('#configModal .modal-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('#configModal .tab-content').forEach(c => c.classList.remove('active'));
+    
+    el.classList.add('active');
+    const content = document.getElementById(tabId);
+    if(content) content.classList.add('active');
+}
+
+async function salvarPerfil() {
+    const novoNome = document.getElementById('configNome').value.trim();
+    if(!novoNome) return mostrarToast('Nome é obrigatório', 'error');
+    
+    localStorage.setItem('nexus_name', novoNome);
+    
+    // Atualizar UI
+    const nameDisplay = document.querySelector('.user-info .name');
+    if(nameDisplay) nameDisplay.innerText = novoNome;
+    
+    // Sincronizar na lista de usuários (localStorage simulation)
+    const email = localStorage.getItem('nexus_user');
+    const usuarios = JSON.parse(localStorage.getItem('nexus_usuarios') || '[]');
+    const uIdx = usuarios.findIndex(u => u.email === email);
+    if(uIdx !== -1) {
+        usuarios[uIdx].nome = novoNome;
+        localStorage.setItem('nexus_usuarios', JSON.stringify(usuarios));
+    }
+
+    mostrarToast('Perfil atualizado com sucesso!', 'success');
+}
+
+function trocarSenha() {
+    const atual = document.getElementById('senhaAtual').value;
+    const nova = document.getElementById('novaSenha').value;
+    const confirma = document.getElementById('confirmarNovaSenha').value;
+    
+    if(!atual || !nova || !confirma) return mostrarToast('Preencha os campos de senha', 'error');
+    if(nova !== confirma) return mostrarToast('As senhas não coincidem', 'error');
+    if(nova.length < 4) return mostrarToast('Mínimo 4 caracteres', 'error');
+    
+    const email = localStorage.getItem('nexus_user');
+    const usuarios = JSON.parse(localStorage.getItem('nexus_usuarios') || '[]');
+    const uIdx = usuarios.findIndex(u => u.email === email);
+    
+    if(uIdx === -1) return mostrarToast('Usuário não encontrado', 'error');
+    
+    if(usuarios[uIdx].senha !== atual) {
+        return mostrarToast('Senha atual incorreta', 'error');
+    }
+    
+    usuarios[uIdx].senha = nova;
+    localStorage.setItem('nexus_usuarios', JSON.stringify(usuarios));
+    
+    // Limpar campos
+    document.getElementById('senhaAtual').value = '';
+    document.getElementById('novaSenha').value = '';
+    document.getElementById('confirmarNovaSenha').value = '';
+    
+    mostrarToast('Senha alterada com sucesso!', 'success');
 }
 
 function fecharConfiguracoes() {
@@ -1522,6 +1594,9 @@ window.visualizarArquivo = visualizarArquivo;
 window.deletarArquivo = deletarArquivo;
 window.abrirConfiguracoes = abrirConfiguracoes;
 window.fecharConfiguracoes = fecharConfiguracoes;
+window.switchConfigTab = switchConfigTab;
+window.salvarPerfil = salvarPerfil;
+window.trocarSenha = trocarSenha;
 window.mudarTema = mudarTema;
 window.toggleNotesPanel = () => {
     const p = document.getElementById('iframeNotesPanel');

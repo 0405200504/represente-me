@@ -115,8 +115,8 @@
                     <div class="page-header">
                         <h1 class="page-title" id="dashboardTitle">Painel de Controle</h1>
                         <div class="page-actions">
-                            <button class="btn btn-secondary" id="btnToggleView">
-                                <i class='bx bx-grid-alt'></i>
+                            <button class="btn" id="btnToggleView">
+                                <i class='bx bx-category-alt'></i>
                                 <span>Grelha</span>
                             </button>
                             <button class="btn btn-primary" onclick="abrirModal()">
@@ -349,22 +349,65 @@
 
     <!-- MODAL DE CONFIGURAÇÕES -->
     <div id="configModal" class="modal-overlay">
-        <div class="modal-container" style="max-width: 400px;">
+        <div class="modal-container" style="max-width: 500px;">
             <div class="modal-header">
                 <h2>Configurações do Sistema</h2>
                 <button class="btn btn-ghost" onclick="fecharConfiguracoes()"><i class='bx bx-x'></i></button>
             </div>
-            <div class="modal-body" style="padding: 24px;">
-                <div class="input-group">
-                    <label>Tema do Painel</label>
-                    <select id="themeSelect" onchange="mudarTema()" style="width: 100%; padding: 8px; background: var(--bg-input); border: 1px solid var(--border-visible); color: white; border-radius: 4px;">
-                        <option value="dark">Industrial (Escuro)</option>
-                        <option value="light">Claro (Classic)</option>
-                    </select>
-                </div>
+            
+            <div class="modal-tabs">
+                <div class="modal-tab active" onclick="switchConfigTab('tab-perfil', this)">Perfil</div>
+                <div class="modal-tab" onclick="switchConfigTab('tab-seguranca', this)">Segurança</div>
+                <div class="modal-tab" onclick="switchConfigTab('tab-tema', this)">Customização</div>
             </div>
-            <div class="modal-actions">
-                <button class="btn btn-primary" onclick="fecharConfiguracoes()">Concluir</button>
+
+            <div class="modal-body" style="padding: 0 24px 24px;">
+                <!-- TAB PERFIL -->
+                <div id="tab-perfil" class="tab-content active">
+                    <div class="profile-avatar-big">
+                        <i class='bx bx-user'></i>
+                    </div>
+                    <div class="form-group">
+                        <label>Nome Completo</label>
+                        <input type="text" id="configNome" placeholder="Seu nome">
+                    </div>
+                    <div class="form-group">
+                        <label>E-mail de Acesso</label>
+                        <input type="email" id="configEmail" readonly style="opacity: 0.6; cursor: not-allowed; background: rgba(0,0,0,0.1);">
+                    </div>
+                    <button class="btn btn-primary" onclick="salvarPerfil()" style="margin-top: 8px;">Atualizar Perfil</button>
+                </div>
+
+                <!-- TAB SEGURANÇA -->
+                <div id="tab-seguranca" class="tab-content">
+                    <div class="form-group">
+                        <label>Senha Atual</label>
+                        <input type="password" id="senhaAtual" placeholder="••••••••">
+                    </div>
+                    <div class="form-group" style="margin-top: 12px;">
+                        <label>Nova Senha</label>
+                        <input type="password" id="novaSenha" placeholder="••••••••">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar Nova Senha</label>
+                        <input type="password" id="confirmarNovaSenha" placeholder="••••••••">
+                    </div>
+                    <button class="btn btn-primary" onclick="trocarSenha()" style="margin-top: 16px;">Alterar Senha</button>
+                </div>
+
+                <!-- TAB TEMA -->
+                <div id="tab-tema" class="tab-content">
+                    <div class="form-group">
+                        <label>Tema do Painel</label>
+                        <select id="themeSelect" onchange="mudarTema()">
+                            <option value="dark">Industrial (Escuro)</option>
+                            <option value="light">Claro (Classic)</option>
+                        </select>
+                    </div>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                        Escolha o tema que melhor se adapta ao seu ambiente de trabalho.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
