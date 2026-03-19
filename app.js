@@ -373,28 +373,66 @@ function getUserPrefix() {
     return localStorage.getItem('nexus_user') || 'default';
 }
 
-function carregarDados() {
-    const prefix = getUserPrefix();
-    const dadosSalvos = localStorage.getItem('nexus_empresas_' + prefix);
-    if (dadosSalvos) {
-        empresas = JSON.parse(dadosSalvos);
-    } else {
-        const oldData = localStorage.getItem('nexus_empresas');
-        if (oldData) {
-            empresas = JSON.parse(oldData);
-            localStorage.setItem('nexus_empresas_' + prefix, oldData);
-            localStorage.removeItem('nexus_empresas');
-        }
+/**
+ * Helper Universal para chamadas de API (Serverless no Vercel)
+ */
+async function fetchAPI(endpoint, method = 'GET', body = null) {
+    const headers = {
+        'Content-Type': 'application/json',
+        'x-user-prefix': getUserPrefix()
+    };
+    const options = { method, headers };
+    if (body) options.body = JSON.stringify(body);
+
+    try {
+        const response = await fetch(`/api/${endpoint}`, options);
+        if (!response.ok) throw new Error(`Status: ${response.status}`);
+        return await response.json();
+    } catch (e) {
+        console.warn(`Fallback: Erro ao acessar API central (${endpoint}). Verifique se o banco está conectado.`);
+        return null;
     }
+}
+
+async function carregarDados() {
+    // 1. Tentar carregar Integrações (Empresas) da Nuvem
+    const dEmpresas = await fetchAPI('empresas');
+    if (dEmpresas && Array.isArray(dEmpresas)) {
+        empresas = dEmpresas;
+    } else {
+        const prefix = getUserPrefix();
+        const dLocal = localStorage.getItem('nexus_empresas_' + prefix);
+        if (dLocal) empresas = JSON.parse(dLocal);
+    }
+    
+    // 2. Tentar carregar Lojistas (Mapa) da Nuvem
+    const dClientes = await fetchAPI('clientes');
+    if (dClientes && Array.isArray(dClientes)) {
+        locaisLojistas = dClientes;
+    } else {
+        const prefix = getUserPrefix();
+        const dLocalMap = localStorage.getItem('nexus_map_pins_' + prefix);
+        if (dLocalMap) locaisLojistas = JSON.parse(dLocalMap);
+    }
+
     renderizarViews();
     atualizarDashboard();
     renderizarSidebarLogos();
     renderizarPinosTopbar();
+    if (pinsLayer) renderizarPinosNoMapa(); // Atualiza mapa se carregado
 }
 
-function salvarDados() {
+async function salvarDados(forceCloud = true) {
     const prefix = getUserPrefix();
+    // Sempre salva um backup no LocalStorage por segurança
     localStorage.setItem('nexus_empresas_' + prefix, JSON.stringify(empresas));
+    
+    // Tenta salvar na nuvem se solicitado
+    if (forceCloud) {
+        // Nota: O salvamento individual é feito na salvarEmpresa
+        // mas aqui podemos disparar um sync se necessário futuramente.
+    }
+    
     atualizarDashboard();
     renderizarSidebarLogos();
     renderizarPinosTopbar();
@@ -414,17 +452,16 @@ window.abrirIframeFullScreen = abrirIframeFullScreen;
 window.prepararEdicao = prepararEdicao;
 window.deletarEmpresa = deletarEmpresa;
 
-function salvarEmpresa(e) {
-    e.preventDefault();
+async function salvarEmpresa(e) {
+    if (e) e.preventDefault();
 
     const nomeEmpresa = document.getElementById('nomeEmpresa')?.value.trim() || "";
-    const cnpjEmpresa = document.getElementById('cnpjEmpresa')?.value.trim() || "";
-    const nomeContato = document.getElementById('nomeContato')?.value.trim() || "";
-    const telefone = document.getElementById('telefone')?.value.trim() || "";
+    const cnpjEmpresa = document.getElementById('cnpjEmpresa')?.value.trim() || "-";
+    const nomeContato = document.getElementById('nomeContato')?.value.trim() || "-";
+    const telefone = document.getElementById('telefone')?.value.trim() || "-";
     const tipoItem = document.getElementById('tipoItem')?.value || "sistema";
     const status = document.getElementById('status')?.value || "ativo";
     const siteUrl = document.getElementById('siteUrl')?.value.trim() || "";
-
     const loginCofre = document.getElementById('loginCofre')?.value.trim() || "";
     const senhaCofre = document.getElementById('senhaCofre')?.value.trim() || "";
 
@@ -435,45 +472,80 @@ function salvarEmpresa(e) {
 
     const editandoTarget = empresas.find(emp => emp.id === editandoId);
 
-    const novaEmpresa = {
-        id: editandoId || Date.now().toString(),
+    const dadosEmpresa = {
+        id: editandoId,
         nome: nomeEmpresa,
-        cnpj: cnpjEmpresa || "-",
-        contato: nomeContato || "-",
-        telefone: telefone || "-",
-        tipo: tipoItem,
-        origem: tipoItem,
-        status: status,
         siteUrl: siteUrl,
+        tipo: tipoItem,
+        status: status,
+        nomeContato: nomeContato,
+        telefone: telefone,
         loginCofre: loginCofre,
         senhaCofre: senhaCofre,
-        notas: editandoTarget ? editandoTarget.notas : "",
-        arquivos: editandoTarget && editandoTarget.arquivos ? editandoTarget.arquivos : [],
-        isPinned: editandoTarget ? editandoTarget.isPinned : false,
-        dataCadastro: editandoTarget ? editandoTarget.dataCadastro : new Date().toISOString()
+        notas: editandoTarget ? editandoTarget.notas : ""
     };
 
-    if (editandoId) {
-        const index = empresas.findIndex(emp => emp.id === editandoId);
-        empresas[index] = novaEmpresa;
-        mostrarToast("Cadastro atualizado com sucesso!");
-    } else {
-        empresas.unshift(novaEmpresa);
-        mostrarToast("Cadastrado com sucesso!");
+    // UI Feedback
+    const btnSalvar = document.getElementById('btnSalvar');
+    const btnTextOriginal = btnSalvar ? btnSalvar.innerText : "Salvar";
+    if (btnSalvar) {
+        btnSalvar.innerText = "Sincronizando...";
+        btnSalvar.disabled = true;
     }
 
-    salvarDados();
-    renderizarViews();
-    fecharModal();
+    // 1. Sincronizar com a Nuvem (Postgres)
+    const result = await fetchAPI('empresas', 'POST', dadosEmpresa);
+
+    if (result && (result.success || result.id)) {
+        if (!editandoId && result.id) dadosEmpresa.id = result.id;
+        
+        if (editandoId) {
+            const index = empresas.findIndex(emp => emp.id === editandoId);
+            if (index !== -1) empresas[index] = { ...empresas[index], ...dadosEmpresa };
+        } else {
+            empresas.unshift(dadosEmpresa);
+        }
+        
+        mostrarToast(editandoId ? "Atualizado na Nuvem!" : "Cadastrado na Nuvem!", "success");
+        salvarDados(false); // Backup local
+        fecharModal();
+        renderizarViews();
+    } else {
+        // Fallback Local
+        mostrarToast("Erro de rede. Salve localmente por enquanto.", "warning");
+        const novaLocal = { ...dadosEmpresa, id: editandoId || Date.now().toString() };
+        if (editandoId) {
+            const index = empresas.findIndex(emp => emp.id === editandoId);
+            if (index !== -1) empresas[index] = novaLocal;
+        } else {
+            empresas.unshift(novaLocal);
+        }
+        salvarDados(false);
+        fecharModal();
+        renderizarViews();
+    }
+    
+    if (btnSalvar) {
+        btnSalvar.innerText = btnTextOriginal;
+        btnSalvar.disabled = false;
+    }
 }
 
-function deletarEmpresa(id) {
+async function deletarEmpresa(id) {
     if (confirm("Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.")) {
+        // 1. Deletar na Nuvem
+        const result = await fetchAPI('empresas', 'DELETE', { id });
+        
+        if (result && result.success) {
+            mostrarToast("Excluído da Nuvem!", "info");
+        } else {
+            mostrarToast("Excluído apenas localmente (sem conexão).", "warning");
+        }
+
         empresas = empresas.filter(emp => emp.id !== id);
-        salvarDados();
+        salvarDados(false);
         renderizarViews();
         mostrarPainel();
-        mostrarToast("Registro excluído com sucesso!", "success");
     }
 }
 
@@ -482,15 +554,15 @@ function prepararEdicao(id) {
     if (empresa) {
         editandoId = id;
         document.getElementById('modalTitle').innerText = "Editar Cadastro / Integração";
-        document.getElementById('empresaId').value = empresa.id;
-        document.getElementById('nomeEmpresa').value = empresa.nome;
+        document.getElementById('empresaId').value = empresa.id || '';
+        document.getElementById('nomeEmpresa').value = empresa.nome || '';
         if (document.getElementById('cnpjEmpresa')) document.getElementById('cnpjEmpresa').value = (empresa.cnpj && empresa.cnpj !== "-") ? empresa.cnpj : "";
-        document.getElementById('nomeContato').value = empresa.contato !== "-" ? empresa.contato : "";
-        document.getElementById('telefone').value = empresa.telefone !== "-" ? empresa.telefone : "";
+        document.getElementById('nomeContato').value = (empresa.nomeContato && empresa.nomeContato !== "-") ? empresa.nomeContato : "";
+        document.getElementById('telefone').value = (empresa.telefone && empresa.telefone !== "-") ? empresa.telefone : "";
 
-        const dropDownTipo = (empresa.tipo || empresa.origem) === 'site' ? 'sistema' : (empresa.tipo || empresa.origem);
+        const dropDownTipo = empresa.tipo === 'site' ? 'sistema' : (empresa.tipo || 'sistema');
         document.getElementById('tipoItem').value = dropDownTipo;
-        document.getElementById('status').value = empresa.status;
+        document.getElementById('status').value = empresa.status || 'ativo';
         document.getElementById('siteUrl').value = empresa.siteUrl || '';
         if (document.getElementById('loginCofre')) document.getElementById('loginCofre').value = empresa.loginCofre || '';
         if (document.getElementById('senhaCofre')) document.getElementById('senhaCofre').value = empresa.senhaCofre || '';
@@ -991,8 +1063,8 @@ function fecharModalPin() {
     pinModal.classList.remove("active");
 }
 
-function salvarLojistaLocal(e) {
-    e.preventDefault();
+async function salvarLojistaLocal(e) {
+    if (e) e.preventDefault();
     const nome = document.getElementById("pinNome").value.trim();
     if (!nome) return;
 
@@ -1002,31 +1074,52 @@ function salvarLojistaLocal(e) {
     const oldPin = editandoPinId ? locaisLojistas.find(l => l.id === editandoPinId) : null;
 
     const novoPin = {
-        id: editandoPinId || Date.now().toString(),
+        id: editandoPinId,
         nome: nome,
         contato: document.getElementById("pinContato").value.trim(),
         status: document.getElementById("pinStatus").value,
         obs: document.getElementById("pinObs").value.trim(),
         lat: parseFloat(latStr),
         lng: parseFloat(lngStr),
-        data: new Date().toISOString(),
         arquivos: oldPin ? (oldPin.arquivos || []) : []
     };
 
-    if (editandoPinId) {
-        const index = locaisLojistas.findIndex(l => l.id === editandoPinId);
-        if (index > -1) {
-            locaisLojistas[index] = novoPin;
+    // UI Feedback
+    const btnSalvar = document.getElementById('btnSalvarPin');
+    const btnTextOriginal = btnSalvar.innerText;
+    btnSalvar.innerText = "Sincronizando...";
+    btnSalvar.disabled = true;
+
+    // 1. Salvar na Nuvem (Postgres)
+    const result = await fetchAPI('clientes', 'POST', novoPin);
+
+    if (result && (result.success || result.id)) {
+        if (!editandoPinId && result.id) novoPin.id = result.id;
+        
+        if (editandoPinId) {
+            const index = locaisLojistas.findIndex(l => l.id === editandoPinId);
+            if (index > -1) locaisLojistas[index] = { ...locaisLojistas[index], ...novoPin };
+        } else {
+            locaisLojistas.push(novoPin);
         }
-        mostrarToast("Local atualizado com sucesso!", "success");
+        mostrarToast(editandoPinId ? "Local atualizado na nuvem!" : "Lojista salvo na nuvem!", "success");
     } else {
-        locaisLojistas.push(novoPin);
-        mostrarToast("Lojista adicionado no mapa!", "success");
+        mostrarToast("Erro de rede. Salvo localmente.", "warning");
+        const pinLocal = { ...novoPin, id: editandoPinId || Date.now().toString() };
+        if (editandoPinId) {
+            const index = locaisLojistas.findIndex(l => l.id === editandoPinId);
+            if (index > -1) locaisLojistas[index] = pinLocal;
+        } else {
+            locaisLojistas.push(pinLocal);
+        }
     }
 
-    salvarPinosLocais();
+    salvarPinosLocais(); // Backup local + renderizarPinosNoMapa
     fecharModalPin();
     if(map) map.closePopup();
+    
+    btnSalvar.innerText = btnTextOriginal;
+    btnSalvar.disabled = false;
 }
 
 function prepararEdicaoPin(id) {
@@ -1046,13 +1139,22 @@ function prepararEdicaoPin(id) {
     pinModal.classList.add("active");
 }
 
-function deletarPinSelecionado() {
+async function deletarPinSelecionado() {
     if (!editandoPinId) return;
-    if (confirm("Remover este local do mapa?")) {
+    if (confirm("Remover este local do mapa? Esta ação será sincronizada com a nuvem.")) {
+        // 1. Deletar na Nuvem
+        const result = await fetchAPI('clientes', 'DELETE', { id: editandoPinId });
+        
+        if (result && result.success) {
+            mostrarToast("Local removido da Nuvem!", "info");
+        } else {
+            mostrarToast("Local removido localmente.", "warning");
+        }
+
         locaisLojistas = locaisLojistas.filter(l => l.id !== editandoPinId);
         salvarPinosLocais();
         fecharModalPin();
-        mostrarToast("Local removido!", "info");
+        if(map) map.closePopup();
     }
 }
 
